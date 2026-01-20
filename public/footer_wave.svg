@@ -1,0 +1,52 @@
+<svg width="1440px" height="240" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="title desc">
+    <defs>
+        <linearGradient id="prefix__prefix__g1" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#e6f2ff" stop-opacity=".9"/>
+            <stop offset="1" stop-color="#e2f0ff" stop-opacity=".7"/>
+        </linearGradient>
+        <linearGradient id="prefix__prefix__g2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#cde5ff" stop-opacity=".8"/>
+            <stop offset="1" stop-color="#b3daff" stop-opacity=".5"/>
+        </linearGradient>
+        <linearGradient id="prefix__prefix__g3" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#def" stop-opacity=".1"/>
+            <stop offset="1" stop-color="#d9ecff" stop-opacity=".03"/>
+        </linearGradient>
+        <style>
+            @keyframes waveMove1 {
+                0% { transform: translateX(0); }
+                50% { transform: translateX(-40px); }
+                100% { transform: translateX(0); }
+            }
+            @keyframes waveMove2 {
+                0% { transform: translateX(0); }
+                50% { transform: translateX(-80px); }
+                100% { transform: translateX(0); }
+            }
+            @keyframes waveMove3 {
+                0% { transform: translateX(0); }
+                50% { transform: translateX(-120px); }
+                100% { transform: translateX(0); }
+            }
+
+            .wave1 {
+                animation: waveMove1 8s ease-in-out infinite;
+            }
+            .wave2 {
+                animation: waveMove2 10s ease-in-out infinite;
+            }
+            .wave3 {
+                animation: waveMove3 14s ease-in-out infinite;
+            }
+        </style>
+    </defs>
+    <g class="wave3">
+        <path d="M0 72c180 48 360-40 540-8s360 128 540 80 360-32 360-32v128H0z" fill="url(#prefix__prefix__g1)"/>
+    </g>
+    <g class="wave2">
+        <path d="M0 104c160-32 320 56 480 32S800 32 960 64s320-24 480 24v152H0z" fill="url(#prefix__prefix__g2)"/>
+    </g>
+    <g class="wave1">
+        <path d="M0 136c200 32 400-40 600-8s400-32 600-8c120 16 240-16 240-16v136H0z" fill="url(#prefix__prefix__g3)"/>
+    </g>
+</svg>
