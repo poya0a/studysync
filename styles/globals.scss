@@ -169,3 +169,34 @@ $text-sub2: #999999;
     font: 14px/1 normal;
     color: $text;
 }
+
+// 캘린더 커스텀
+#body .react-calendar {
+    width: 100%;
+    border: none !important;
+}
+
+#body .react-calendar__navigation {
+
+    button {
+
+        &:hover {
+        }
+    }
+}
+
+#body .react-calendar__month-view__weekdays {
+    abbr {
+    }
+}
+
+#body .react-calendar__tile {
+    &:hover {
+    }
+}
+
+#body .react-calendar__tile--now {
+}
+
+#body .react-calendar__tile--active {
+}
