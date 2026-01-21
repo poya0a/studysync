@@ -26,7 +26,7 @@
 }
 
 .dateContainer {
-    margin: 50px 0;
+    margin: 20px 0 50px;
     padding: 10px;
     background-color: #ebf0ff;
     border-radius: var(--radius);
@@ -62,6 +62,7 @@
 }
 
 .todayButton {
+    margin-top: 20px;
     display: flex;
     justify-self: end;
     height: 32px;
@@ -72,6 +73,30 @@
     border: 1px solid $blue-color !important;
     background-color: $blue-color;
     color: $background-color;
+}
+
+.buttonContainer {
+    display: flex;
+    justify-content: flex-end;
+    justify-self: center;
+    width: 100%;
+    max-width: 1000px;
+    button {
+        width: fit-content;
+        font-size: 12px;
+        font-weight: 800;
+        color: $text-sub;
+        padding: 10px 20px;
+        border-radius: var(--radius);
+        background-color: $sub-color;
+        &.groupJoinButton {
+            margin-left: 20px;
+        }
+        &.approveButton {
+            color: $background-color;
+            background-color: $main-color;
+        }
+    }
 }
 
 .eventList {
@@ -151,23 +176,23 @@
         margin: 0;
     }
     .buttonContainer {
-        margin-top: 30px;
-        display: flex;
         justify-content: space-between;
+        margin-top: 30px;
+    }
+}
+
+.inputText {
+    min-width: 245px;
+    margin-bottom: 20px;
+    label {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 10px;
+        color: $blue-color;
+    }
+    input {
         width: 100%;
-        button {
-            width: fit-content;
-            font-size: 12px;
-            font-weight: 800;
-            color: $text-sub;
-            padding: 10px 20px;
-            border-radius: var(--radius);
-            background-color: $sub-color;
-            &.approveButton {
-                color: $background-color;
-                background-color: $main-color;
-            }
-        }
+        font-size: 16px;
     }
 }
 

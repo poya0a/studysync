@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import { getEvents, addEvent, deleteEvent } from "@/lib/calendar";
+import { createGroup, joinGroupByCode } from "@/lib/group";
 import { Event } from "@/types/event";
 import { useUserStore } from "@/store/useUserStore";
 import { randomPastelColor } from "@/utils/random";
@@ -9,6 +10,11 @@ import "react-calendar/dist/Calendar.css";
 import styles from "@/styles/components/_studyCalendar.module.scss";
 
 const TITLE_MAX = 50;
+
+type InputPopupState = {
+    open: boolean;
+    type: string;
+};
 
 type ConfirmAlertState = {
     open: boolean;
@@ -29,6 +35,12 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
     const [date, setDate] = useState(new Date());
     const [events, setEvents] = useState<Event[]>([]);
     const [title, setTitle] = useState<string>("");
+    const [inputValue, setInputValue] = useState<string>("");
+    const [inputPopup, setInputPopup] = useState<InputPopupState>({
+        open: false,
+        type: "",
+    });
+    const [errorMessage, setErrorMessage] = useState<string>("");
     const [showAlert, setShowAlert] = useState<string>("");
     const [confirmAlert, setConfirmAlert] = useState<ConfirmAlertState>({
         open: false,
@@ -38,10 +50,13 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
     useEffect(() => {
         if (!user.uid) return;
 
+        const id = groupId ? groupId : user.uid;
+        const type = groupId ? "group" : "personal";
+
         let ignore = false;
 
         (async () => {
-            const data = await getEvents(user.uid!, groupId);
+            const data = await getEvents(id!, type);
             if (!ignore) {
                 setEvents(data as Event[]);
             }
@@ -74,6 +89,42 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
         return acc;
     }, {});
 
+    const openInputPopup = (t: "create" | "join") => {
+        setInputPopup({
+            open: true,
+            type: t
+        });
+        setInputValue("");
+        setErrorMessage("");
+    };
+
+    const closeInputPopup = () => {
+        setInputPopup({
+            open: false,
+            type: ""
+        });
+
+        setInputValue("");
+        setErrorMessage("");
+    };
+
+    const handleGroup = () => {
+        if (inputPopup.type === "") return;
+        if (inputValue === "" ) {
+            if (inputPopup.type === "create") {
+                return setErrorMessage("그룹 이름을 입력해 주세요.");
+            } else {
+                return setErrorMessage("초대 코드를 입력해 주세요.");
+            };
+        };
+
+        if (inputPopup.type === "create") {
+            createGroup(inputValue, user.uid!);
+        } else {
+            joinGroupByCode(inputValue, user.uid!)
+        };
+    };
+
     useEffect(() => {
         if (showAlert && showAlert !== "") {
             const timer = setTimeout(() => setShowAlert(""), 2000);
@@ -101,13 +152,22 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
 
     return (
         <>
-            <button
-                type="button"
-                className={styles.todayButton}
-                onClick={() => setDate(new Date())}
-            >
-                오늘
-            </button>
+            <div className={styles.buttonContainer}>
+                <button
+                    type="button"
+                    className={styles.groupCreateButton}
+                    onClick={() => openInputPopup("create")}
+                >
+                    그룹 생성
+                </button>
+                <button
+                    type="button"
+                    className={styles.groupJoinButton}
+                    onClick={() => openInputPopup("join")}
+                >
+                    그룹 참여
+                </button>
+            </div>
             <div className={styles.calendar}>
                 <Calendar
                     locale="ko-KR"
@@ -136,6 +196,14 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
                     }}
                 />
                 
+                <button
+                    type="button"
+                    className={styles.todayButton}
+                    onClick={() => setDate(new Date())}
+                >
+                    오늘
+                </button>
+
                 <div className={styles.dateContainer}>
                     <p>선택한 날짜</p>
                     <p className={styles.selectedDate}>{formatKoreanDate(date)}</p>
@@ -172,7 +240,7 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
                                     <span className={styles.title}>{e.title}</span>
                                     <button 
                                         className={styles.deleteButton} 
-                                        onClick={() => openConfirmAlert("일정을 삭제하시겠습니까?", () => deleteEvent(e.id))}
+                                        onClick={() => openConfirmAlert("일정을 삭제하시겠습니까?", () => deleteEvent(e.id, user.uid!))}
                                     >
                                         삭제
                                     </button>
@@ -181,6 +249,44 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
                     </ul>
                 }
             </div>
+            {inputPopup.open &&
+                <div className={styles.alertOverlay}>
+                    <div className={styles.alert}>
+                        <div className={styles.alertHeader}>
+                            {
+                                inputPopup.type === "create" ?
+                                "그룹 생성" :
+                                "그룹 참여"
+                            }
+                        </div>
+                        <div className={styles.inputText}>
+                            <label htmlFor="groupInput">{}</label>
+                            <input
+                                id="groupInput"
+                                name="groupInput"
+                                type="text"
+                                maxLength={100}
+                                placeholder={
+                                    inputPopup.type === "create" ?
+                                    "그룹 이름" :
+                                    "초대 코드"
+                                }
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                            />
+                        </div>
+                        {errorMessage !== "" && 
+                            <p className={styles.errorMessage}>
+                                {errorMessage}
+                            </p>
+                        }
+                        <div className={styles.buttonContainer}>
+                            <button className={styles.cancelButton} onClick={closeInputPopup}>닫기</button>
+                            <button className={styles.approveButton} onClick={handleGroup}>확인</button>
+                        </div>
+                    </div>
+                </div>
+            }
             {confirmAlert.open &&
                 <div className={styles.alertOverlay}>
                     <div className={styles.alert}>
