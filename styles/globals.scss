@@ -165,7 +165,10 @@ $text-sub2: #999999;
 
 #body {
     position: relative;
+    height: var(--height);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
     font: 14px/1 normal;
     color: $text;
 }
@@ -173,30 +176,55 @@ $text-sub2: #999999;
 // 캘린더 커스텀
 #body .react-calendar {
     width: 100%;
-    border: none !important;
+    padding: 10px;
+    border: 2px solid #ebf0ff !important;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(
+        to bottom,
+        #ebf0ff 0%,
+        $background-color 40%
+    );
 }
 
 #body .react-calendar__navigation {
-
     button {
-
         &:hover {
+            border-radius: var(--radius);
         }
     }
 }
 
 #body .react-calendar__month-view__weekdays {
     abbr {
+        font-size: 14px;
+        border-radius: var(--radius);
+        text-decoration: none;
     }
 }
 
 #body .react-calendar__tile {
+    transition: all .3s;
+    padding: 20px auto;
     &:hover {
+        border-radius: var(--radius);
     }
 }
 
 #body .react-calendar__tile--now {
+    background-color: #eff3ff;
+    border-radius: var(--radius);
 }
 
 #body .react-calendar__tile--active {
+    transition: all .3s;
+    background-color: $main-color;
+    border-radius: var(--radius);
+    &:hover {
+        background-color: rgba(0, 23, 142, .3);
+    }
+}
+
+#body .react-calendar__month-view__days__day--neighboringMonth {
+    color: $text-sub2;
 }

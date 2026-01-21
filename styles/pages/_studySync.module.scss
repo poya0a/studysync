@@ -5,7 +5,7 @@
         margin: auto;
         width: 100%;
         max-width: 1100px;
-        min-height: calc(100vh - 50px);
+        min-height: calc(var(--height) - 50px);
         padding: 100px clamp(20px, 5vw, 50px);
 }
 

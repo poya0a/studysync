@@ -18,7 +18,7 @@ const initialUser: UserData = {
     email: null,
 };
 
-export const useUsertStore = create<UserStore>((set) => ({
+export const useUserStore = create<UserStore>((set) => ({
     user: initialUser,
 
     setUser: (data) => set({ user: data }),

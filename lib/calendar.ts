@@ -1,35 +1,40 @@
 import {
     collection,
+    getDocs,
     addDoc,
     deleteDoc,
     doc,
-    getDocs,
     query,
+    where,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { Event, EventInput } from "@/types/event";
 
-export interface EventData {
-    id?: string;
-    title: string;
-    date: string;
-}
+export const getEvents = async (
+    uid: string,
+    groupId: string | null
+): Promise<Event[]> => {
+    const q = query(
+        collection(db, "events"),
+        where("uid", "==", uid),
+        where("groupId", "==", groupId)
+    );
 
-const eventsCollection = collection(db, "events");
-
-export const getEvents = async (): Promise<EventData[]> => {
-    const q = query(eventsCollection);
     const snapshot = await getDocs(q);
+
     return snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
-    })) as EventData[];
+        ...(doc.data() as Omit<Event, "id">),
+    }));
 };
 
-export const addEvent = async (event: EventData) => {
-    await addDoc(eventsCollection, event);
+export const addEvent = async (data: EventInput) => {
+    await addDoc(collection(db, "events"), {
+        ...data,
+        createdAt: new Date(),
+    });
 };
 
 export const deleteEvent = async (id: string) => {
-    const docRef = doc(db, "events", id);
-    await deleteDoc(docRef);
+    await deleteDoc(doc(db, "events", id));
 };

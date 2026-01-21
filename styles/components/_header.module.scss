@@ -30,71 +30,15 @@
     background-color: transparent;
 }
 
-.menu {
-    width: 50px;
-    height: 50px;
-    background: none;
-    .inner {
-        position: relative;
-        width: 30px;
-        height: 30px;
-        margin: 10px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-around;
-        .bar {
-            display: block;
-            width: 100%;
-            height: 2px;
-            background-color: $blue-color;
-            border-radius: 1px;
-            transition: all 0.3s ease;
-        }
-        .bar1 {
-            transform: rotate(45deg) translate(10px, 4px);
-        }
-        .bar2 {
-            opacity: 0;
-        }
-        .bar3 {
-            transform: rotate(-45deg) translate(10px, -4px);
-        }
-    }
-}
-
-.nav {
-    position: absolute;
-    top: 50px;
-    left: 0;
-    width: 100%;
-    height: auto;
-    padding: 20px clamp(20px, calc(5vw + 10px), 50px);
-    background-color: $background-color;
-    transform: translateY(calc(-100% - 50px));
-    opacity: 0;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow-md);
-    ul {
-        list-style: none;
-        padding: 0;
-        li {
-            align-items: flex-start;
-            display: flex;
-            padding: 10px 0;
-            font-size: 18px;
-            font-weight: 900;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            &.active {
-                color: $main-color;
-            }
-            &:hover {
-                color: $text-sub2;
-            }
-        }
-    }
-    &.open {
-        transform: translateY(0);
-        opacity: 1;
-    } 
+.loginButon {
+    width: fit-content;
+    margin: 7.5px 0;
+    font-size: 12px;
+    font-weight: 800;
+    color: $background-color;
+    text-decoration: none;
+    padding: 10px 20px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    background-color: $main-color;
+    border-radius: var(--radius);
 }
