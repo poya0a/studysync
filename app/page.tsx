@@ -9,7 +9,10 @@ import styles from "@/styles/pages/_studySync.module.scss";
 
 export default function StudySyncPage() {
     const { user } = useUserStore();
-    const [groupId, setGroupId] = useState<string | null>(null);
+    const [selectedGroup, setSelectedGroup] = useState<{
+        id: string,
+        inviteCode: string
+    } | null>(null);
 
     return (
         <>
@@ -21,11 +24,14 @@ export default function StudySyncPage() {
                     </div>
                     {user.uid && 
                         <GroupSelector
-                            value={groupId}
-                            onChange={setGroupId}
+                            value={selectedGroup}
+                            onChange={setSelectedGroup}
                         />
                     }
-                    <StudyCalendar groupId={groupId}/>
+                    <StudyCalendar 
+                        selectedGroup={selectedGroup}
+                        onGroupChange={(data) => setSelectedGroup(data)}
+                    />
                 </div>
             <Footer />
         </>

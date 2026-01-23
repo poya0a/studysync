@@ -12,16 +12,27 @@ import {
 import { db } from "./firebase";
 import { Group } from "@/types/group";
 
-export async function createGroup(name: string, uid: string) {
+export async function createGroup(
+    name: string,
+    uid: string
+): Promise<{
+        id: string,
+        inviteCode: string
+    }> {
     const inviteCode = Math.random().toString(36).slice(2, 8).toUpperCase();
 
-    await addDoc(collection(db, "groups"), {
+    const docRef = await addDoc(collection(db, "groups"), {
         name,
         inviteCode,
         ownerId: uid,
         members: [uid],
         createdAt: serverTimestamp(),
     });
+
+    return {
+        id: docRef.id,
+        inviteCode: inviteCode
+    };
 }
 
 export async function getMyGroups(uid: string): Promise<Group[]> {
@@ -46,23 +57,37 @@ export async function getMyGroups(uid: string): Promise<Group[]> {
     });
 }
 
-export async function joinGroupByCode(code: string, uid: string) {
+export async function joinGroupByCode(
+    code: string,
+    uid: string
+): Promise<{
+        id: string,
+        inviteCode: string
+    }> {
     const q = query(
         collection(db, "groups"),
         where("inviteCode", "==", code)
     );
+
     const snap = await getDocs(q);
 
-    if (snap.empty) throw new Error("존재하지 않는 초대 코드");
+    if (snap.empty) {
+        throw new Error("존재하지 않는 초대 코드");
+    }
 
     const groupDoc = snap.docs[0];
     const data = groupDoc.data();
 
-    if (data.members.includes(uid)) return;
+    if (!data.members.includes(uid)) {
+        await updateDoc(doc(db, "groups", groupDoc.id), {
+            members: [...data.members, uid],
+        });
+    }
 
-    await updateDoc(doc(db, "groups", groupDoc.id), {
-        members: [...data.members, uid],
-    });
+    return {
+        id: groupDoc.id,
+        inviteCode: code
+    };
 }
 
 export async function deleteGroup(groupId: string) {

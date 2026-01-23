@@ -96,6 +96,11 @@
             color: $background-color;
             background-color: $main-color;
         }
+        &.codeCopyButton {
+            margin-left: 20px;
+            color: $background-color;
+            background-color: $main-color;
+        }
     }
 }
 
@@ -146,7 +151,7 @@
     top: 0;
     left: 0;
     width: 100vw;
-    height: var(--height);
+    height: 100dvh;
     background-color: rgba(0,0,0,0.3);
 }
 

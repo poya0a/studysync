@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
-import { getEvents, addEvent, deleteEvent } from "@/lib/calendar";
+import { EventBaseMap, getEventCounts, getEvents, addEvent, deleteEvent } from "@/lib/calendar";
 import { createGroup, joinGroupByCode } from "@/lib/group";
 import { Event } from "@/types/event";
 import { useUserStore } from "@/store/useUserStore";
@@ -9,11 +9,24 @@ import { randomPastelColor } from "@/utils/random";
 import "react-calendar/dist/Calendar.css";
 import styles from "@/styles/components/_studyCalendar.module.scss";
 
+type Props = {
+    selectedGroup: {
+        id: string,
+        inviteCode: string
+    } | null;
+    onGroupChange: (
+        selectedGroup: {
+            id: string,
+            inviteCode: string
+        } | null
+    ) => void;
+};
+
 const TITLE_MAX = 50;
 
 type InputPopupState = {
     open: boolean;
-    type: string;
+    type: "create" | "join" | "";
 };
 
 type ConfirmAlertState = {
@@ -22,17 +35,17 @@ type ConfirmAlertState = {
     onConfirm?: () => void;
 };
 
-function formatKoreanDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+const toDateKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-    return `${year}년 ${month}월 ${day}일`;
+function formatKoreanDate(date: Date): string {
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
 }
 
-export default function StudyCalendar({ groupId }: { groupId: string | null }) {
+export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
     const { user } = useUserStore();
     const [date, setDate] = useState(new Date());
+    const [eventCountMap, setEventCountMap] = useState<EventBaseMap>({});
     const [events, setEvents] = useState<Event[]>([]);
     const [title, setTitle] = useState<string>("");
     const [inputValue, setInputValue] = useState<string>("");
@@ -50,22 +63,33 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
     useEffect(() => {
         if (!user.uid) return;
 
-        const id = groupId ? groupId : user.uid;
-        const type = groupId ? "group" : "personal";
+        const id = selectedGroup?.id ?? user.uid;
+        const type = selectedGroup ? "group" : "personal";
+
+        (async () => {
+            const map = await getEventCounts(id, type);
+            setEventCountMap(map);
+        })();
+    }, [user.uid, selectedGroup]);
+
+    useEffect(() => {
+        if (!user.uid) return;
+
+        const dateKey = toDateKey(date);
+        const id = selectedGroup?.id ?? user.uid;
+        const type = selectedGroup ? "group" : "personal";
 
         let ignore = false;
 
         (async () => {
-            const data = await getEvents(id!, type);
-            if (!ignore) {
-                setEvents(data as Event[]);
-            }
+            const data = await getEvents(dateKey, id, type);
+            if (!ignore) setEvents(data);
         })();
 
         return () => {
             ignore = true;
         };
-    }, [user.uid, groupId]);
+    }, [user.uid, selectedGroup, date]);
 
     const handleAdd = async () => {
         if (!user.uid) return setShowAlert("로그인 후 일정 등록이 가능합니다.");
@@ -73,56 +97,82 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
 
         await addEvent({
             title,
-            date: date.toISOString(),
-            uid: user.uid!,
-            groupId,
-            color: randomPastelColor()
+            date: toDateKey(date),
+            uid: user.uid,
+            groupId: selectedGroup?.id ?? null,
+            color: randomPastelColor(),
         });
+
         setTitle("");
         setShowAlert("일정이 등록되었습니다.");
+
+        const dateKey = toDateKey(date);
+        const id = selectedGroup?.id ?? user.uid;
+        const type = selectedGroup ? "group" : "personal";
+        setEventCountMap(await getEventCounts(id, type));
+        setEvents(await getEvents(dateKey, id, type));
     };
 
-    const eventsByDate = events.reduce<Record<string, Event[]>>((acc, e) => {
-        const key = e.date.slice(0, 10);
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(e);
-        return acc;
-    }, {});
-
-    const openInputPopup = (t: "create" | "join") => {
-        setInputPopup({
-            open: true,
-            type: t
-        });
+    const openInputPopup = (type: "create" | "join") => {
+        setInputPopup({ open: true, type });
         setInputValue("");
         setErrorMessage("");
     };
 
     const closeInputPopup = () => {
-        setInputPopup({
-            open: false,
-            type: ""
-        });
-
-        setInputValue("");
-        setErrorMessage("");
+        setInputPopup({ open: false, type: "" });
     };
 
-    const handleGroup = () => {
+    const handleGroup = async () => {
         if (inputPopup.type === "") return;
-        if (inputValue === "" ) {
-            if (inputPopup.type === "create") {
-                return setErrorMessage("그룹 이름을 입력해 주세요.");
-            } else {
-                return setErrorMessage("초대 코드를 입력해 주세요.");
-            };
+
+        if (!inputValue.trim()) {
+            return setErrorMessage(
+                inputPopup.type === "create"
+                    ? "그룹 이름을 입력해 주세요."
+                    : "초대 코드를 입력해 주세요."
+            );
+        }
+
+        let newGroupId: {
+            id: string,
+            inviteCode: string
         };
 
         if (inputPopup.type === "create") {
-            createGroup(inputValue, user.uid!);
+            newGroupId = await createGroup(inputValue, user.uid!);
         } else {
-            joinGroupByCode(inputValue, user.uid!)
-        };
+            newGroupId = await joinGroupByCode(inputValue, user.uid!);
+        }
+
+        onGroupChange(newGroupId);
+
+        closeInputPopup();
+        setShowAlert("그룹이 변경되었습니다.");
+    };
+
+    const handleCodeCopy = async () => {
+        if (!selectedGroup?.inviteCode) return setShowAlert("초대 코드가 존재하지 않습니다.");
+        await navigator.clipboard.writeText(selectedGroup?.inviteCode);
+        setShowAlert("링크가 복사되었습니다.");
+    };
+
+    const confirmDelete = (eventId: string) => {
+        if (!user.uid) return;
+        setConfirmAlert({
+            open: true,
+            message: "일정을 삭제하시겠습니까?",
+            onConfirm: async () => {
+                await deleteEvent(eventId, user.uid!);
+                setConfirmAlert({ open: false, message: "" });
+
+                const dateKey = toDateKey(date);
+                const id = selectedGroup?.id ?? user.uid!;
+                const type = selectedGroup ? "group" : "personal";
+                setEventCountMap(await getEventCounts(id, type));
+                setEvents(await getEvents(dateKey, id, type));
+            },
+        });
     };
 
     useEffect(() => {
@@ -131,17 +181,6 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
             return () => clearTimeout(timer);
         }
     }, [showAlert]);
-
-    const openConfirmAlert = (
-        message: string,
-        onConfirm: () => void
-    ) => {
-        setConfirmAlert({
-            open: true,
-            message,
-            onConfirm,
-        });
-    };
 
     const closeConfirmAlert = () => {
         setConfirmAlert(prev => ({
@@ -167,28 +206,35 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
                 >
                     그룹 참여
                 </button>
+                {selectedGroup &&
+                    <button
+                        type="button"
+                        className={styles.codeCopyButton}
+                        onClick={handleCodeCopy}
+                    >
+                        초대 코드 복사
+                    </button>
+                }
             </div>
             <div className={styles.calendar}>
                 <Calendar
                     locale="ko-KR"
                     value={date}
                     onChange={(v) => setDate(v as Date)}
-                    tileContent={({ date }) => {
-                        const day = date.toISOString().slice(0, 10);
-                        const dayEvents = eventsByDate[day];
-                        if (!dayEvents || dayEvents.length === 0) return null;
-                        const visible = dayEvents.slice(0, 3);
-                        const overflow = dayEvents.length - 3;
+                    tileContent={({ date: d }) => {
+                        const key = toDateKey(d);
+                        const items = eventCountMap[key];
+                        if (!items) return null;
                         return (
                             <div className={styles.dots}>
-                                {visible.map((e) => (
+                                {items.slice(0, 3).map((e, i) => (
                                     <span
-                                        key={e.id}
+                                        key={`event-dot-${e.date}-${i}`}
                                         className={styles.dot}
                                         style={{ backgroundColor: e.color }}
                                     />
                                 ))}
-                                {overflow > 0 && (
+                                {items.length > 3 && (
                                     <span className={styles.more}>+</span>
                                 )}
                             </div>
@@ -229,22 +275,12 @@ export default function StudyCalendar({ groupId }: { groupId: string | null }) {
                 </div>
                 {events.length > 0 &&
                     <ul className={styles.eventList}>
-                        {events
-                            .filter((e) => e.date.slice(0, 10) === date.toISOString().slice(0, 10))
-                            .map((e) => (
-                                <li key={e.id} className={styles.eventItem}>
-                                    <span
-                                        className={styles.colorDot}
-                                        style={{ backgroundColor: e.color }}
-                                    />
-                                    <span className={styles.title}>{e.title}</span>
-                                    <button 
-                                        className={styles.deleteButton} 
-                                        onClick={() => openConfirmAlert("일정을 삭제하시겠습니까?", () => deleteEvent(e.id, user.uid!))}
-                                    >
-                                        삭제
-                                    </button>
-                                </li>
+                        {events.map((e) => (
+                            <li key={e.id} className={styles.eventItem}>
+                                <span className={styles.colorDot} style={{ background: e.color }} />
+                                <span className={styles.title}>{e.title}</span>
+                                <button className={styles.deleteButton}  onClick={() => confirmDelete(e.id)}>삭제</button>
+                            </li>
                         ))}
                     </ul>
                 }
