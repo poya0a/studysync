@@ -2,16 +2,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { auth, provider } from "@/lib/firebase";
-import { signInWithRedirect, signOut } from "firebase/auth";
+import { signInWithPopup, signOut } from "firebase/auth";
 import { useUserStore } from "@/store/useUserStore"
 import styles from "@/styles/components/_header.module.scss";
 
 export default function Header() {
     const { user, clearUser } = useUserStore();
-    
+
     const handleLogin = async () => {
         try {
-            await signInWithRedirect(auth, provider);
+            await signInWithPopup(auth, provider);
         } catch (error) {
             console.error("로그인 실패", error);
         }
