@@ -1,6 +1,8 @@
 import {
     collection,
     addDoc,
+    setDoc,
+    getDoc,
     getDocs,
     query,
     where,
@@ -16,18 +18,22 @@ export async function createGroup(
     name: string,
     uid: string
 ): Promise<{ id: string; inviteCode: string }> {
-    const inviteCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const inviteCode = Math.random().toString(36).slice(2, 12).toUpperCase();
 
     const docRef = await addDoc(collection(db, "groups"), {
         name,
         inviteCode,
         ownerId: uid,
-        members: {
-            [uid]: true,
-        },
+        members: { [uid]: true },
         createdAt: serverTimestamp(),
     });
 
+    await setDoc(doc(db, "groupInvites", inviteCode), {
+        groupId: docRef.id,
+        createdAt: serverTimestamp(),
+        expiresAt: null,
+    });
+    
     return {
         id: docRef.id,
         inviteCode,
@@ -60,32 +66,39 @@ export async function joinGroupByCode(
     code: string,
     uid: string
 ): Promise<{ id: string; inviteCode: string }> {
-    const q = query(
-        collection(db, "groups"),
-        where("inviteCode", "==", code)
-    );
+    const inviteSnap = await getDoc(doc(db, "groupInvites", code));
 
-    const snap = await getDocs(q);
-
-    if (snap.empty) {
+    if (!inviteSnap.exists()) {
         throw new Error("존재하지 않는 초대 코드");
     }
 
-    const groupDoc = snap.docs[0];
-    const data = groupDoc.data();
+    const { groupId } = inviteSnap.data();
 
-    if (!data.members?.[uid]) {
-        await updateDoc(doc(db, "groups", groupDoc.id), {
+    try {
+        await updateDoc(doc(db, "groups", groupId), {
             [`members.${uid}`]: true,
         });
+    } catch (error) {
+        console.log(error)
     }
 
     return {
-        id: groupDoc.id,
+        id: groupId,
         inviteCode: code,
     };
 }
 
 export async function deleteGroup(groupId: string) {
-    await deleteDoc(doc(db, "groups", groupId));
+    const groupRef = doc(db, "groups", groupId);
+    const snap = await getDoc(groupRef);
+
+    if (!snap.exists()) return;
+
+    const { inviteCode } = snap.data();
+
+    await deleteDoc(groupRef);
+
+    if (inviteCode) {
+        await deleteDoc(doc(db, "groupInvites", inviteCode));
+  }
 }

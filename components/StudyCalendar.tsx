@@ -67,8 +67,12 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
         const type = selectedGroup ? "group" : "personal";
 
         (async () => {
-            const map = await getEventCounts(id, type);
-            setEventCountMap(map);
+            try {
+                const map = await getEventCounts(id, type);
+                setEventCountMap(map);
+            } catch {
+                setShowAlert("일정 목록을 가져올 수 없습니다.");
+            }
         })();
     }, [user.uid, selectedGroup]);
 
@@ -82,8 +86,12 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
         let ignore = false;
 
         (async () => {
-            const data = await getEvents(dateKey, id, type);
-            if (!ignore) setEvents(data);
+            try {
+                const data = await getEvents(dateKey, id, type);
+                if (!ignore) setEvents(data);
+            } catch (e) {
+                setShowAlert("일정을 가져올 수 없습니다.");
+            }
         })();
 
         return () => {
@@ -95,22 +103,27 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
         if (!user.uid) return setShowAlert("로그인 후 일정 등록이 가능합니다.");
         if (!title.trim()) return setShowAlert("일정 제목을 입력해 주세요.");
 
-        await addEvent({
-            title,
-            date: toDateKey(date),
-            uid: user.uid,
-            groupId: selectedGroup?.id ?? null,
-            color: randomPastelColor(),
-        });
+        try {
+            await addEvent({
+                title,
+                date: toDateKey(date),
+                uid: user.uid,
+                groupId: selectedGroup?.id ?? null,
+                color: randomPastelColor(),
+            });
 
+            const dateKey = toDateKey(date);
+            const id = selectedGroup?.id ?? user.uid;
+            const type = selectedGroup ? "group" : "personal";
+
+            setEventCountMap(await getEventCounts(id, type));
+            setEvents(await getEvents(dateKey, id, type));
+        } catch {
+            setTitle("");
+            return setShowAlert("일정 등록에 실패했습니다.");
+        }
         setTitle("");
         setShowAlert("일정이 등록되었습니다.");
-
-        const dateKey = toDateKey(date);
-        const id = selectedGroup?.id ?? user.uid;
-        const type = selectedGroup ? "group" : "personal";
-        setEventCountMap(await getEventCounts(id, type));
-        setEvents(await getEvents(dateKey, id, type));
     };
 
     const openInputPopup = (type: "create" | "join") => {
@@ -139,15 +152,24 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
             inviteCode: string
         };
 
-        if (inputPopup.type === "create") {
-            newGroupId = await createGroup(inputValue, user.uid!);
-        } else {
-            newGroupId = await joinGroupByCode(inputValue, user.uid!);
+        try {
+            if (inputPopup.type === "create") {
+                newGroupId = await createGroup(inputValue, user.uid!);
+            } else {
+                newGroupId = await joinGroupByCode(inputValue, user.uid!);
+            }
+            onGroupChange(newGroupId);
+            closeInputPopup();
+        } catch {
+            closeInputPopup();
+            return setShowAlert(`그룹 
+                ${inputPopup.type === "create"
+                    ? "생성에"
+                    : "가입에"
+                }
+                실패하였습니다.`);
         }
 
-        onGroupChange(newGroupId);
-
-        closeInputPopup();
         setShowAlert("그룹이 변경되었습니다.");
     };
 
@@ -192,20 +214,24 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
     return (
         <>
             <div className={styles.buttonContainer}>
-                <button
-                    type="button"
-                    className={styles.groupCreateButton}
-                    onClick={() => openInputPopup("create")}
-                >
-                    그룹 생성
-                </button>
-                <button
-                    type="button"
-                    className={styles.groupJoinButton}
-                    onClick={() => openInputPopup("join")}
-                >
-                    그룹 참여
-                </button>
+                {user.uid &&
+                    <> 
+                        <button
+                            type="button"
+                            className={styles.groupCreateButton}
+                            onClick={() => openInputPopup("create")}
+                        >
+                            그룹 생성
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.groupJoinButton}
+                            onClick={() => openInputPopup("join")}
+                        >
+                            그룹 참여
+                        </button>
+                    </>
+                }
                 {selectedGroup &&
                     <button
                         type="button"
