@@ -89,7 +89,7 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
             try {
                 const data = await getEvents(dateKey, id, type);
                 if (!ignore) setEvents(data);
-            } catch (e) {
+            } catch {
                 setShowAlert("일정을 가져올 수 없습니다.");
             }
         })();
@@ -118,7 +118,8 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
 
             setEventCountMap(await getEventCounts(id, type));
             setEvents(await getEvents(dateKey, id, type));
-        } catch {
+        } catch(e) {
+            console.log(e)
             setTitle("");
             return setShowAlert("일정 등록에 실패했습니다.");
         }
@@ -230,16 +231,16 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
                         >
                             그룹 참여
                         </button>
+                        {selectedGroup &&
+                            <button
+                                type="button"
+                                className={styles.codeCopyButton}
+                                onClick={handleCodeCopy}
+                            >
+                                초대 코드 복사
+                            </button>
+                        }
                     </>
-                }
-                {selectedGroup &&
-                    <button
-                        type="button"
-                        className={styles.codeCopyButton}
-                        onClick={handleCodeCopy}
-                    >
-                        초대 코드 복사
-                    </button>
                 }
             </div>
             <div className={styles.calendar}>
@@ -305,7 +306,9 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
                             <li key={e.id} className={styles.eventItem}>
                                 <span className={styles.colorDot} style={{ background: e.color }}></span>
                                 <span className={styles.title}>{e.title}</span>
-                                <button className={styles.deleteButton}  onClick={() => confirmDelete(e.id)}>삭제</button>
+                                {e.uid === user.uid && 
+                                    <button className={styles.deleteButton}  onClick={() => confirmDelete(e.id)}>삭제</button>
+                                }
                             </li>
                         ))}
                     </ul>

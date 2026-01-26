@@ -25,7 +25,7 @@ const assertGroupOwner = async (groupId: string, uid: string) => {
     const group = snap.data();
 
     if (group.ownerId !== uid) {
-        throw new Error("그룹 생성자만 수행할 수 있습니다.");
+        throw new Error("그룹 생성자만 가능합니다.");
     }
 };
 
@@ -72,7 +72,6 @@ export const getEventCounts = async (
     return map;
 };
 
-
 export const getEvents = async (
     dateKey: string,
     id: string,
@@ -101,7 +100,17 @@ export const getEvents = async (
 
 export const addEvent = async (data: EventInput) => {
     if (data.groupId !== null) {
-        await assertGroupOwner(data.groupId, data.uid);
+        const snap = await getDoc(doc(db, "groups", data.groupId));
+
+        if (!snap.exists()) {
+            throw new Error("그룹이 존재하지 않습니다.");
+        }
+
+        const group = snap.data();
+
+        if (!group.members?.[data.uid]) {
+            throw new Error("그룹 멤버만 생성할 수 있습니다.");
+        }
     }
 
     const dateKey = data.date.slice(0, 10);
@@ -128,12 +137,22 @@ export const deleteEvent = async (
 
     if (event.groupId === null) {
         if (event.uid !== requesterUid) {
-            throw new Error("본인 일정만 삭제할 수 있습니다.");
+            throw new Error("본인이 작성한 일정만 삭제할 수 있습니다.");
         }
     }
 
     if (event.groupId !== null) {
-        await assertGroupOwner(event.groupId, requesterUid);
+        const snap = await getDoc(doc(db, "groups", event.groupId));
+
+        if (!snap.exists()) {
+            throw new Error("그룹이 존재하지 않습니다.");
+        }
+
+        const group = snap.data();
+
+        if (!group.members?.[requesterUid]) {
+            throw new Error("본인이 작성한 일정만 삭제할 수 있습니다.");
+        }
     }
 
     await deleteDoc(ref);
