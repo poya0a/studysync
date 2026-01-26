@@ -165,10 +165,6 @@ $text-sub2: #999999;
 
 #body {
     position: relative;
-    height: 100dvh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
     font: 14px/1 normal;
     color: $text;
 }

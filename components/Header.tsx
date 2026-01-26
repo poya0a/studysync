@@ -1,22 +1,13 @@
 "use client";
-import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { auth, provider } from "@/lib/firebase";
-import { signInWithRedirect, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { signInWithRedirect, signOut } from "firebase/auth";
 import { useUserStore } from "@/store/useUserStore"
 import styles from "@/styles/components/_header.module.scss";
 
 export default function Header() {
     const { user, clearUser } = useUserStore();
-    const persistenceSet = useRef(false);
-
-    useEffect(() => {
-        if (persistenceSet.current) return;
-
-        persistenceSet.current = true;
-        setPersistence(auth, browserLocalPersistence).catch(console.error);
-    }, []);
     
     const handleLogin = async () => {
         try {

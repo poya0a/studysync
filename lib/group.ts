@@ -15,30 +15,29 @@ import { Group } from "@/types/group";
 export async function createGroup(
     name: string,
     uid: string
-): Promise<{
-        id: string,
-        inviteCode: string
-    }> {
+): Promise<{ id: string; inviteCode: string }> {
     const inviteCode = Math.random().toString(36).slice(2, 8).toUpperCase();
 
     const docRef = await addDoc(collection(db, "groups"), {
         name,
         inviteCode,
         ownerId: uid,
-        members: [uid],
+        members: {
+            [uid]: true,
+        },
         createdAt: serverTimestamp(),
     });
 
     return {
         id: docRef.id,
-        inviteCode: inviteCode
+        inviteCode,
     };
 }
 
 export async function getMyGroups(uid: string): Promise<Group[]> {
     const q = query(
         collection(db, "groups"),
-        where("members", "array-contains", uid)
+        where(`members.${uid}`, "==", true)
     );
 
     const snap = await getDocs(q);
@@ -60,10 +59,7 @@ export async function getMyGroups(uid: string): Promise<Group[]> {
 export async function joinGroupByCode(
     code: string,
     uid: string
-): Promise<{
-        id: string,
-        inviteCode: string
-    }> {
+): Promise<{ id: string; inviteCode: string }> {
     const q = query(
         collection(db, "groups"),
         where("inviteCode", "==", code)
@@ -78,15 +74,15 @@ export async function joinGroupByCode(
     const groupDoc = snap.docs[0];
     const data = groupDoc.data();
 
-    if (!data.members.includes(uid)) {
+    if (!data.members?.[uid]) {
         await updateDoc(doc(db, "groups", groupDoc.id), {
-            members: [...data.members, uid],
+            [`members.${uid}`]: true,
         });
     }
 
     return {
         id: groupDoc.id,
-        inviteCode: code
+        inviteCode: code,
     };
 }
 

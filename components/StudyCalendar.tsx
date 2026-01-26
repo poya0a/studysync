@@ -232,7 +232,7 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
                                         key={`event-dot-${e.date}-${i}`}
                                         className={styles.dot}
                                         style={{ backgroundColor: e.color }}
-                                    />
+                                    ></span>
                                 ))}
                                 {items.length > 3 && (
                                     <span className={styles.more}>+</span>
@@ -277,7 +277,7 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
                     <ul className={styles.eventList}>
                         {events.map((e) => (
                             <li key={e.id} className={styles.eventItem}>
-                                <span className={styles.colorDot} style={{ background: e.color }} />
+                                <span className={styles.colorDot} style={{ background: e.color }}></span>
                                 <span className={styles.title}>{e.title}</span>
                                 <button className={styles.deleteButton}  onClick={() => confirmDelete(e.id)}>삭제</button>
                             </li>

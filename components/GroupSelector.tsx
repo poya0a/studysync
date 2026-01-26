@@ -62,7 +62,7 @@ export default function GroupSelector({ value, onChange }: Props) {
                 onClick={() => setOpen((v) => !v)}
             >
                 {selectedLabel}
-                <span className={styles.arrow} />
+                <span className={styles.arrow}></span>
             </button>
 
             {open && (
