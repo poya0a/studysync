@@ -1,9 +1,9 @@
 "use client";
 import { ReactNode, useEffect } from "react";
 import {
-  setPersistence,
-  browserLocalPersistence,
-  getRedirectResult,
+    setPersistence,
+    browserLocalPersistence,
+    getRedirectResult,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { initAuthListener } from "@/lib/authListener";

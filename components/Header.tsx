@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { auth, provider, db } from "@/lib/firebase";
+import { auth, provider } from "@/lib/firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
-import { disableNetwork, enableNetwork } from "firebase/firestore";
 import { useUserStore } from "@/store/useUserStore"
 import styles from "@/styles/components/_header.module.scss";
 
@@ -20,9 +19,7 @@ export default function Header() {
 
     const handleLogout = async () => {
         try {
-            await disableNetwork(db);
             await signOut(auth);
-            await enableNetwork(db);
         } catch (error) {
             console.error("로그아웃 실패", error);
         };

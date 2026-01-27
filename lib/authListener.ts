@@ -1,8 +1,7 @@
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db, USER_ROLES } from "@/lib/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { useUserStore } from "@/store/useUserStore";
-import { UserRole } from "@/store/useUserStore";
+import { useUserStore, UserRole } from "@/store/useUserStore";
 
 export function initAuthListener() {
     const { setUser, clearUser } = useUserStore.getState();
