@@ -24,4 +24,9 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
-export { auth, provider, db };
+const USER_ROLES: Record<string, "SUPER_ADMIN" | "ADMIN" | "USER"> = {
+    "SUPER_ADMIN_UID": "SUPER_ADMIN",
+    "ADMIN_UID": "ADMIN",
+};
+
+export { auth, provider, db, USER_ROLES };

@@ -15,20 +15,6 @@ import { Event, EventInput, EventBase } from "@/types/event";
 
 export type EventBaseMap = Record<string, EventBase[]>;
 
-const assertGroupOwner = async (groupId: string, uid: string) => {
-    const snap = await getDoc(doc(db, "groups", groupId));
-
-    if (!snap.exists()) {
-        throw new Error("그룹이 존재하지 않습니다.");
-    }
-
-    const group = snap.data();
-
-    if (group.ownerId !== uid) {
-        throw new Error("그룹 생성자만 가능합니다.");
-    }
-};
-
 export const getEventCounts = async (
     id: string,
     type: "personal" | "group"

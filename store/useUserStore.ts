@@ -1,9 +1,12 @@
 import { create } from "zustand";
 
+export type UserRole = "SUPER_ADMIN" | "ADMIN" | "USER";
+
 export type UserData = {
     uid: string | null;
     name: string | null;
     email: string | null;
+    role: UserRole;
 };
 
 type UserStore = {
@@ -16,6 +19,7 @@ const initialUser: UserData = {
     uid: null,
     name: null,
     email: null,
+    role: "USER",
 };
 
 export const useUserStore = create<UserStore>((set) => ({
