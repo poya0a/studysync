@@ -7,6 +7,8 @@ export type UserData = {
     name: string | null;
     email: string | null;
     role: UserRole;
+    createdAt: Date;
+    lastLogin: Date;
 };
 
 type UserStore = {
@@ -20,6 +22,8 @@ const initialUser: UserData = {
     name: null,
     email: null,
     role: "USER",
+    createdAt: new Date(),
+    lastLogin: new Date()
 };
 
 export const useUserStore = create<UserStore>((set) => ({

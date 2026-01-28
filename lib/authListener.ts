@@ -1,6 +1,6 @@
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db, USER_ROLES } from "@/lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useUserStore, UserRole } from "@/store/useUserStore";
 
 export function initAuthListener() {
@@ -14,25 +14,37 @@ export function initAuthListener() {
                 const userSnap = await getDoc(userRef);
 
                 let role: UserRole = "USER";
-                if (USER_ROLES[user.uid]) role = USER_ROLES[user.uid];
+                let createdAt: Date = new Date();
 
                 if (!userSnap.exists()) {
+                    if (USER_ROLES[user.uid]) {
+                        role = USER_ROLES[user.uid];
+                    }
+
                     await setDoc(userRef, {
                         email: user.email,
                         name: user.displayName,
                         role,
+                        createdAt: serverTimestamp,
+                        lastLogin: serverTimestamp
                     });
+                    createdAt = new Date();
                 } else {
-                    if (role === "SUPER_ADMIN" && userSnap.data().role !== "SUPER_ADMIN") {
-                        await setDoc(userRef, { ...userSnap.data(), role }, { merge: true });
-                    }
-                    role = userSnap.data().role;
+                    const data = userSnap.data();
+                    role = data.role;
+                    createdAt = data.createdAt?.toDate?.() ?? new Date();
+
+                    await updateDoc(userRef, {
+                        lastLogin: serverTimestamp(),
+                    });
                 }
                 setUser({
                     uid: user.uid,
                     name: user.displayName ?? "",
                     email: user.email ?? "",
-                    role
+                    role,
+                    createdAt: createdAt,
+                    lastLogin: new Date(),
                 });
             }
             handleUser();
