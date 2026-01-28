@@ -94,7 +94,7 @@ export const addEvent = async (data: EventInput) => {
 
         const group = snap.data();
 
-        if (!group.members?.[data.uid]) {
+        if (!group.members?.includes(data.uid)) {
             throw new Error("그룹 멤버만 생성할 수 있습니다.");
         }
     }
@@ -136,7 +136,7 @@ export const deleteEvent = async (
 
         const group = snap.data();
 
-        if (!group.members?.[requesterUid]) {
+        if (!group.members?.includes(requesterUid)) {
             throw new Error("본인이 작성한 일정만 삭제할 수 있습니다.");
         }
     }

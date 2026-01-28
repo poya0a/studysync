@@ -9,6 +9,7 @@ import {
     updateDoc,
     deleteDoc,
     doc,
+    arrayUnion,
     serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -24,8 +25,14 @@ export async function createGroup(
         name,
         inviteCode,
         ownerId: uid,
-        members: { [uid]: true },
+        members: [uid],
         createdAt: serverTimestamp(),
+    });
+
+    await setDoc(doc(db, "groupMembers", `${docRef.id}_${uid}`), {
+        groupId: docRef.id,
+        uid,
+        joinedAt: serverTimestamp(),
     });
 
     await setDoc(doc(db, "groupInvites", inviteCode), {
@@ -43,7 +50,7 @@ export async function createGroup(
 export async function getMyGroups(uid: string): Promise<Group[]> {
     const q = query(
         collection(db, "groups"),
-        where(`members.${uid}`, "==", true)
+        where("members", "array-contains", uid)
     );
 
     const snap = await getDocs(q);
@@ -76,7 +83,12 @@ export async function joinGroupByCode(
 
     try {
         await updateDoc(doc(db, "groups", groupId), {
-            [`members.${uid}`]: true,
+            members: arrayUnion(uid),
+        });
+        await setDoc(doc(db, "groupMembers", `${groupId}_${uid}`), {
+            groupId,
+            uid,
+            joinedAt: serverTimestamp(),
         });
     } catch (error) {
         console.log(error)
@@ -89,16 +101,19 @@ export async function joinGroupByCode(
 }
 
 export async function deleteGroup(groupId: string) {
-    const groupRef = doc(db, "groups", groupId);
-    const snap = await getDoc(groupRef);
+    const membersSnap = await getDocs(
+        query(collection(db, "groupMembers"), where("groupId", "==", groupId))
+    );
 
-    if (!snap.exists()) return;
+    for (const m of membersSnap.docs) {
+        await deleteDoc(doc(db, "groupMembers", m.id));
+    }
 
-    const { inviteCode } = snap.data();
+    const groupSnap = await getDoc(doc(db, "groups", groupId));
+    if (groupSnap.exists()) {
+        const { inviteCode } = groupSnap.data();
+        if (inviteCode) await deleteDoc(doc(db, "groupInvites", inviteCode));
+    }
 
-    await deleteDoc(groupRef);
-
-    if (inviteCode) {
-        await deleteDoc(doc(db, "groupInvites", inviteCode));
-  }
+    await deleteDoc(doc(db, "groups", groupId));
 }
