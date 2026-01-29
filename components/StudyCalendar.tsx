@@ -3,23 +3,16 @@ import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import { EventBaseMap, getEventCounts, getEvents, addEvent, deleteEvent } from "@/lib/calendar";
 import { createGroup, joinGroupByCode } from "@/lib/group";
-import { Event } from "@/types/event";
+import { Group, PERSONAL_GROUP } from "@/types/group";
+import type { Event } from "@/types/event";
 import { useUserStore } from "@/store/useUserStore";
 import { randomPastelColor } from "@/utils/random";
 import "react-calendar/dist/Calendar.css";
 import styles from "@/styles/components/_studyCalendar.module.scss";
 
 type Props = {
-    selectedGroup: {
-        id: string,
-        inviteCode: string
-    } | null;
-    onGroupChange: (
-        selectedGroup: {
-            id: string,
-            inviteCode: string
-        } | null
-    ) => void;
+    selectedGroup: Group;
+    onGroupChange: (group: Group) => void;
 };
 
 const TITLE_MAX = 50;
@@ -61,14 +54,18 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
     });
 
     useEffect(() => {
-        if (!user.uid) return;
-
-        const id = selectedGroup?.id ?? user.uid;
-        const type = selectedGroup ? "group" : "personal";
+        if (!user.uid) {
+            onGroupChange(PERSONAL_GROUP);
+            Promise.resolve().then(() => setEventCountMap({}));
+            return;
+        };
 
         (async () => {
             try {
-                const map = await getEventCounts(id, type);
+                const map = await getEventCounts(
+                    user.uid!,
+                    selectedGroup.id
+                );
                 setEventCountMap(map);
             } catch {
                 setShowAlert("일정 목록을 가져올 수 없습니다.");
@@ -77,17 +74,21 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
     }, [user.uid, selectedGroup]);
 
     useEffect(() => {
-        if (!user.uid) return;
+        if (!user.uid) {
+            Promise.resolve().then(() => setEvents([]));
+            return;
+        };
 
         const dateKey = toDateKey(date);
-        const id = selectedGroup?.id ?? user.uid;
-        const type = selectedGroup ? "group" : "personal";
-
         let ignore = false;
 
         (async () => {
             try {
-                const data = await getEvents(dateKey, id, type);
+                const data = await getEvents(
+                    dateKey,
+                    user.uid!,
+                    selectedGroup.id
+                );
                 if (!ignore) setEvents(data);
             } catch {
                 setShowAlert("일정을 가져올 수 없습니다.");
@@ -108,16 +109,25 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
                 title,
                 date: toDateKey(date),
                 uid: user.uid,
-                groupId: selectedGroup?.id ?? null,
+                groupId: selectedGroup.id,
                 color: randomPastelColor(),
             });
 
             const dateKey = toDateKey(date);
-            const id = selectedGroup?.id ?? user.uid;
-            const type = selectedGroup ? "group" : "personal";
 
-            setEventCountMap(await getEventCounts(id, type));
-            setEvents(await getEvents(dateKey, id, type));
+            setEventCountMap(
+                await getEventCounts(
+                    user.uid, 
+                    selectedGroup.id
+                )
+            );
+            setEvents(
+                await getEvents(
+                    dateKey, 
+                    user.uid,
+                    selectedGroup.id
+                )
+            );
         } catch(e) {
             console.log(e)
             setTitle("");
@@ -148,20 +158,18 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
             );
         }
 
-        let newGroupId: {
-            id: string,
-            inviteCode: string
-        };
+        let newGroup: Group;
 
         try {
             if (inputPopup.type === "create") {
-                newGroupId = await createGroup(inputValue, user.uid!);
+                newGroup = await createGroup(inputValue, user.uid!);
             } else {
-                newGroupId = await joinGroupByCode(inputValue, user.uid!);
+                newGroup = await joinGroupByCode(inputValue, user.uid!);
             }
-            onGroupChange(newGroupId);
+            onGroupChange(newGroup);
             closeInputPopup();
-        } catch {
+        } catch(e) {
+            console.log(e)
             closeInputPopup();
             return setShowAlert(`그룹 
                 ${inputPopup.type === "create"
@@ -186,14 +194,12 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
             open: true,
             message: "일정을 삭제하시겠습니까?",
             onConfirm: async () => {
-                await deleteEvent(eventId, user.uid!);
+                await deleteEvent(eventId);
                 setConfirmAlert({ open: false, message: "" });
 
                 const dateKey = toDateKey(date);
-                const id = selectedGroup?.id ?? user.uid!;
-                const type = selectedGroup ? "group" : "personal";
-                setEventCountMap(await getEventCounts(id, type));
-                setEvents(await getEvents(dateKey, id, type));
+                setEventCountMap(await getEventCounts(user.uid!, selectedGroup?.id ?? "PERSONAL"));
+                setEvents(await getEvents(dateKey, user.uid!, selectedGroup?.id ?? "PERSONAL"));
             },
         });
     };
@@ -231,7 +237,7 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
                         >
                             그룹 참여
                         </button>
-                        {selectedGroup &&
+                        {selectedGroup.id !== "PERSONAL" &&
                             <button
                                 type="button"
                                 className={styles.codeCopyButton}

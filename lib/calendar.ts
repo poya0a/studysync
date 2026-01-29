@@ -6,49 +6,46 @@ import {
     doc,
     query,
     where,
-    getDoc,
     QueryDocumentSnapshot,
-    DocumentData
+    serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Event, EventInput, EventBase } from "@/types/event";
+import type { Event, EventBase } from "@/types/event";
 
-export type EventBaseMap = Record<string, EventBase[]>;
+export type EventCountItem = Pick<
+    EventBase,
+    "uid" | "groupId" | "title" | "date" | "color"
+>;
+
+export type EventBaseMap = Record<string, EventCountItem[]>;
 
 export const getEventCounts = async (
-    id: string,
-    type: "personal" | "group"
+    ownerId: string,
+    groupId: string | "PERSONAL"
 ): Promise<EventBaseMap> => {
-    let q;
-
-    if (type === "personal") {
-        q = query(
-            collection(db, "events"),
-            where("uid", "==", id),
-            where("groupId", "==", null)
-        );
-    } else {
-        q = query(
-            collection(db, "events"),
-            where("groupId", "==", id)
-        );
-    }
+    const q =
+        groupId === "PERSONAL"
+            ? query(
+                collection(db, "events"),
+                where("uid", "==", ownerId),
+                where("groupId", "==", "PERSONAL")
+            )
+            : query(
+                collection(db, "events"),
+                where("groupId", "==", groupId)
+            );
 
     const snap = await getDocs(q);
-
     const map: EventBaseMap = {};
 
-    snap.docs.forEach((doc) => {
-        const data = doc.data();
-        const dateKey = data.dateKey;
-
+    snap.forEach((d) => {
+        const data = d.data();
+        const dateKey = data.dateKey as string | undefined;
         if (!dateKey) return;
 
-        if (!map[dateKey]) {
-            map[dateKey] = [];
-        }
-
-        map[dateKey].push({
+        (map[dateKey] ??= []).push({
+            uid: data.uid,
+            groupId: data.groupId,
             title: data.title,
             date: data.date,
             color: data.color,
@@ -60,99 +57,48 @@ export const getEventCounts = async (
 
 export const getEvents = async (
     dateKey: string,
-    id: string,
-    type: "personal" | "group"
+    ownerId: string,
+    groupId: string | "PERSONAL"
 ): Promise<Event[]> => {
-    let q;
-
-    if (type === "personal") {
-        q = query(
-            collection(db, "events"),
-            where("uid", "==", id),
-            where("groupId", "==", null),
-            where("dateKey", "==", dateKey)
-        );
-    } else {
-        q = query(
-            collection(db, "events"),
-            where("groupId", "==", id),
-            where("dateKey", "==", dateKey)
-        );
-    }
-
+    const q =
+        groupId === "PERSONAL"
+            ? query(
+                collection(db, "events"),
+                where("uid", "==", ownerId),
+                where("groupId", "==", "PERSONAL"),
+                where("dateKey", "==", dateKey)
+            )
+            : query(
+                collection(db, "events"),
+                where("groupId", "==", groupId),
+                where("dateKey", "==", dateKey)
+            );
     const snap = await getDocs(q);
+
     return snap.docs.map(mapEvent);
 };
 
-export const addEvent = async (data: EventInput) => {
-    if (data.groupId !== null) {
-        const snap = await getDoc(doc(db, "groups", data.groupId));
-
-        if (!snap.exists()) {
-            throw new Error("그룹이 존재하지 않습니다.");
-        }
-
-        const group = snap.data();
-
-        if (!group.members?.includes(data.uid)) {
-            throw new Error("그룹 멤버만 생성할 수 있습니다.");
-        }
-    }
-
+export const addEvent = async (data: EventBase) => {
     const dateKey = data.date.slice(0, 10);
 
     await addDoc(collection(db, "events"), {
         ...data,
         dateKey,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
     });
 };
 
-export const deleteEvent = async (
-    eventId: string,
-    requesterUid: string
-) => {
-    const ref = doc(db, "events", eventId);
-    const snap = await getDoc(ref);
-
-    if (!snap.exists()) {
-        throw new Error("일정이 존재하지 않습니다.");
-    }
-
-    const event = snap.data();
-
-    if (event.groupId === null) {
-        if (event.uid !== requesterUid) {
-            throw new Error("본인이 작성한 일정만 삭제할 수 있습니다.");
-        }
-    }
-
-    if (event.groupId !== null) {
-        const snap = await getDoc(doc(db, "groups", event.groupId));
-
-        if (!snap.exists()) {
-            throw new Error("그룹이 존재하지 않습니다.");
-        }
-
-        const group = snap.data();
-
-        if (!group.members?.includes(requesterUid)) {
-            throw new Error("본인이 작성한 일정만 삭제할 수 있습니다.");
-        }
-    }
-
-    await deleteDoc(ref);
+export const deleteEvent = async (eventId: string) => {
+    await deleteDoc(doc(db, "events", eventId));
 };
 
-function mapEvent(d: QueryDocumentSnapshot<DocumentData>): Event {
-    const data = d.data();
+function mapEvent(
+    d: QueryDocumentSnapshot
+): Event {
+    const data = d.data() as EventBase;
 
     return {
         id: d.id,
-        title: data.title,
-        date: data.date,
-        uid: data.uid,
-        groupId: data.groupId,
-        color: data.color,
+        ...data,
     };
 }

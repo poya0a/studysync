@@ -1,21 +1,13 @@
 "use client";
 import { useEffect, useState, useRef, useMemo } from "react";
-import { Group } from "@/types/group";
+import { Group, PERSONAL_GROUP } from "@/types/group";
 import { getMyGroups } from "@/lib/group";
 import { useUserStore } from "@/store/useUserStore";
 import styles from "@/styles/components/_groupSelector.module.scss";
 
 type Props = {
-    value: {
-        id: string,
-        inviteCode: string
-    } | null;
-    onChange: (
-        groupId: {
-            id: string,
-            inviteCode: string
-        } | null
-    ) => void;
+    value: Group;
+    onChange: (group: Group) => void;
 };
 
 export default function GroupSelector({ value, onChange }: Props) {
@@ -27,17 +19,16 @@ export default function GroupSelector({ value, onChange }: Props) {
     useEffect(() => {
         if (!user.uid) return;
 
-        let ignore = false;
+        getMyGroups(user.uid).then(setGroups);
+    }, [user.uid]);
 
-        (async () => {
-            const data = await getMyGroups(user.uid!);
-            if (!ignore) setGroups(data);
-        })();
+    useEffect(() => {
+        if (groups.some((g) => g.id === value.id) || value.id === "PERSONAL") return;
 
-        return () => {
-            ignore = true;
-        };
-    }, [user.uid, value]);
+        Promise.resolve().then(() => {
+            setGroups((prev) => [...prev, value]);
+        });
+    }, [value]);
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -50,9 +41,9 @@ export default function GroupSelector({ value, onChange }: Props) {
     }, []);
 
     const selectedLabel = useMemo(() => {
-        if (value === null) return "개인 일정";
-        return groups.find((g) => g.id === value.id)?.name ?? "그룹 선택";
-    }, [value, groups]);
+        if (value.id === "PERSONAL") return "개인 일정";
+        return value.name;
+    }, [value]);
 
     return (
         <div className={styles.container} ref={ref}>
@@ -68,19 +59,20 @@ export default function GroupSelector({ value, onChange }: Props) {
             {open && (
                 <ul className={styles.dropdown}>
                     <li
-                        className={value === null ? styles.active : ""}
+                        key="personal"
+                        className={value.id === "PERSONAL" ? styles.active : ""}
                         onClick={() => {
-                            onChange(null);
+                            onChange(PERSONAL_GROUP);
                             setOpen(false);
                         }}
                     >
                         개인 일정
                     </li>
 
-                    {groups.map((g) => (
+                    {groups.map((g, i) => (
                         <li
-                            key={g.id}
-                            className={value?.id === g.id ? styles.active : ""}
+                            key={`group-item-${i}`}
+                            className={value.id === g.id ? styles.active : ""}
                             onClick={() => {
                                 onChange(g);
                                 setOpen(false);

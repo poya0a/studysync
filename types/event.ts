@@ -1,21 +1,12 @@
 export type EventBase = {
+    uid: string;
+    groupId: string | "PERSONAL";
     title: string;
     date: string;
     color: string;
 };
 
-export type PersonalEventInput = EventBase & {
-    uid: string;
-    groupId: null;
-};
-
-export type GroupEventInput = EventBase & {
-    uid: string;
-    groupId: string;
-};
-
-export type EventInput = PersonalEventInput | GroupEventInput;
-
-export type Event = EventInput & {
+export type Event = EventBase & {
     id: string;
+    authorName?: string;
 };

@@ -1,5 +1,5 @@
 "use client";
-import { Event } from "@/types/event";
+import type { Event } from "@/types/event";
 
 export default function MonthlyStats({ events }: { events: Event[] }) {
     const now = new Date();

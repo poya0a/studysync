@@ -5,14 +5,12 @@ import Footer from "@/components/Footer";
 import GroupSelector from "@/components/GroupSelector";
 import StudyCalendar from "@/components/StudyCalendar";
 import { useUserStore } from "@/store/useUserStore";
+import { Group, PERSONAL_GROUP } from "@/types/group";
 import styles from "@/styles/pages/_studySync.module.scss";
 
 export default function StudySyncPage() {
     const { user } = useUserStore();
-    const [selectedGroup, setSelectedGroup] = useState<{
-        id: string,
-        inviteCode: string
-    } | null>(null);
+    const [selectedGroup, setSelectedGroup] = useState<Group>(PERSONAL_GROUP);
 
     return (
         <>
@@ -30,7 +28,7 @@ export default function StudySyncPage() {
                     }
                     <StudyCalendar 
                         selectedGroup={selectedGroup}
-                        onGroupChange={(data) => setSelectedGroup(data)}
+                        onGroupChange={setSelectedGroup}
                     />
                 </div>
             <Footer />

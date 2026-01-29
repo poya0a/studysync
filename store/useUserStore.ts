@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { Timestamp } from "firebase/firestore";
 
 export type UserRole = "SUPER_ADMIN" | "ADMIN" | "USER";
 
@@ -7,8 +8,8 @@ export type UserData = {
     name: string | null;
     email: string | null;
     role: UserRole;
-    createdAt: Date;
-    lastLogin: Date;
+    createdAt: Timestamp;
+    lastLogin: Timestamp;
 };
 
 type UserStore = {
@@ -22,8 +23,8 @@ const initialUser: UserData = {
     name: null,
     email: null,
     role: "USER",
-    createdAt: new Date(),
-    lastLogin: new Date()
+    createdAt: Timestamp.now(),
+    lastLogin: Timestamp.now()
 };
 
 export const useUserStore = create<UserStore>((set) => ({
