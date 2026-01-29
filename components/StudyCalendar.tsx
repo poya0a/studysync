@@ -128,8 +128,7 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
                     selectedGroup.id
                 )
             );
-        } catch(e) {
-            console.log(e)
+        } catch {
             setTitle("");
             return setShowAlert("일정 등록에 실패했습니다.");
         }
@@ -168,8 +167,7 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
             }
             onGroupChange(newGroup);
             closeInputPopup();
-        } catch(e) {
-            console.log(e)
+        } catch {
             closeInputPopup();
             return setShowAlert(`그룹 
                 ${inputPopup.type === "create"
