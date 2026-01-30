@@ -2,8 +2,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { auth, provider } from "@/lib/firebase";
-import { signInWithRedirect, signInWithPopup, signOut } from "firebase/auth";
-import { useUserStore } from "@/store/useUserStore"
+import { signInWithPopup, signOut } from "firebase/auth";
+import { useUserStore } from "@/store/useUserStore";
 import styles from "@/styles/components/_header.module.scss";
 
 export default function Header() {
@@ -11,12 +11,7 @@ export default function Header() {
 
     const handleLogin = async () => {
         try {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile) {
-                await signInWithRedirect(auth, provider);
-            } else {
-                await signInWithPopup(auth, provider);
-            }
+            await signInWithPopup(auth, provider);
         } catch (error) {
             console.error("로그인 실패", error);
         }
@@ -29,7 +24,7 @@ export default function Header() {
             console.error("로그아웃 실패", error);
         };
     };
-
+    
     return (
         <header className={styles.header}>
             <div className={styles.container}>
