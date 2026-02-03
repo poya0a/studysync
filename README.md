@@ -8,8 +8,6 @@ https://studysync-two.vercel.app
 
 ---
 
-## 주요 기능
-
 **인증 및 사용자 관리**
   - Firebase Auth 기반 로그인 및 인증 처리
   - 로그인 상태에 따른 사용자별 일정 데이터 관리
