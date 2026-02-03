@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StudySync — 스터디 일정 관리 캘린더
 
-## Getting Started
+개인 및 그룹 스터디 일정을 한 곳에서 관리할 수 있는 캘린더 기반 일정 관리 웹 애플리케이션
+개인 일정과 그룹 일정을 분리해 관리할 수 있으며 그룹 권한에 따른 일정 제어
 
-First, run the development server:
+**배포 주소**  
+https://studysync-two.vercel.app
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 주요 기능
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 인증 및 사용자 관리
+- Firebase Auth 기반 로그인 및 인증 처리
+- 로그인 상태에 따른 사용자별 일정 데이터 관리
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 개인 / 그룹 일정 관리
+- 개인 일정과 그룹 일정 분리 조회
+- 날짜별 일정 추가, 수정, 삭제 기능 제공
+- 그룹 일정은 권한에 따라 관리 가능
 
-## Learn More
+### 그룹 기능
+- 그룹 생성 및 초대 코드 기반 그룹 참여
+- 그룹 소유자(owner) 권한 기반 일정 추가·삭제 제어
+- 다중 사용자 그룹 스터디 환경 지원
 
-To learn more about Next.js, take a look at the following resources:
+### 캘린더 UI
+- React Calendar 기반 월 / 일 단위 일정 조회
+- 날짜별 일정 존재 여부를 색상 dot UI로 표시
+- 일정 밀도와 가시성을 고려한 캘린더 UX 구성
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 기술 스택
 
-## Deploy on Vercel
+**Frontend**: Next.js, React, TypeScript  
+**Backend**: Firebase Auth, Firestore  
+**State Management**: Zustand  
+**UI Component**: React Calendar  
+**Styling**: SCSS  
+**Deployment**: Vercel  
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 기술적 포인트
+
+### Firebase 기반 인증 및 데이터 구조 설계
+- Firebase Auth를 활용한 사용자 인증 및 세션 관리
+- Firestore를 이용한 사용자 / 그룹 / 일정 데이터 모델링
+- 사용자별 접근 권한을 고려한 데이터 구조 설계 경험
+
+### 그룹 권한 기반 일정 제어
+- 그룹 소유자(owner)와 일반 참여자 권한 구분
+- 권한에 따라 일정 추가·삭제 가능 여부 제어
+- 협업형 일정 관리 서비스에서의 권한 설계 경험
+
+### 상태 관리 구조 설계
+- Zustand를 활용해 인증 상태와 일정 상태 분리 관리
+- 캘린더 UI와 데이터 로직 간 의존성 최소화
+- 일정 변경 시 UI 즉시 반영되는 흐름 설계
+
+### 캘린더 UX 최적화
+- 날짜별 일정 존재 여부를 dot UI로 시각화
+- 월 단위에서 전체 일정 흐름을 한눈에 파악 가능
+- 일정 관리 서비스에서의 사용성 중심 UI 설계 경험
+
+---
+
+## 프로젝트 목적
+
+- 개인 및 그룹 단위 일정 관리 서비스 구조 이해
+- 캘린더 UI와 상태 관리 로직의 효율적인 결합 경험
+- 실사용 시나리오를 고려한 일정 관리 UX 설계 역량 강화
