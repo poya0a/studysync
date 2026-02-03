@@ -54,6 +54,15 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
     });
 
     useEffect(() => {
+        const isOpen = showAlert !== "" || confirmAlert.open;
+        document.body.style.overflow = isOpen ? "hidden" : "auto";
+
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [showAlert, confirmAlert.open]);
+
+    useEffect(() => {
         if (!user.uid) {
             onGroupChange(PERSONAL_GROUP);
             Promise.resolve().then(() => setEventCountMap({}));
