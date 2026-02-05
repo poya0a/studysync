@@ -48,16 +48,16 @@
         max-width: 1000px;
         background-color: $background-color;
         .scheduleTitle {
-                font-size: 16px;
-                max-width: 900px;
-                width: calc(100% - 100px);
+            font-size: 16px;
+            max-width: 900px;
+            width: calc(100% - 100px);
         }
         .registrationButton {
-                background-color: $main-color;
-                font-weight: 900;
-                padding: 0 30px;
-                border-radius: var(--radius);
-                color: $background-color;
+            background-color: $main-color;
+            font-weight: 900;
+            padding: 0 30px;
+            border-radius: var(--radius);
+            color: $background-color;
         }
 }
 
@@ -124,6 +124,29 @@
         text-overflow: ellipsis;
         line-height: 30px;
     }
+    .scheduleTitleEdit {
+        width: 100%;
+        height: 30px !important;
+        padding: 0 10px !important;
+        line-height: 30px !important;
+        font-size: 16px;
+    }
+    .buttonContainer {
+        display: flex;
+        gap: 18px;
+        margin-left: auto;
+        button {
+            padding: 0 20px;
+            height: 30px;
+            border-radius: var(--radius);
+            font-weight: 900;
+            font-size: 14px;
+            line-height: 30px;
+            background-color: $background-color;
+            color: $blue-color;
+            border: 1px solid $blue-color !important;
+        }
+    }
 }
 
 .colorDot {
@@ -131,18 +154,6 @@
     height: 10px;
     border-radius: 50%;
     margin: 10px 0;
-}
-
-.deleteButton {
-    margin-left: auto;
-    padding: 0 20px;
-    height: 30px;
-    border-radius: var(--radius);
-    background-color: $background-color;
-    color: $blue-color;
-    font-weight: 900;
-    font-size: 14px;
-    border: 1px solid $blue-color !important;
 }
 
 .alertOverlay {

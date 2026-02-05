@@ -2,6 +2,7 @@ import {
     collection,
     getDocs,
     addDoc,
+    updateDoc,
     deleteDoc,
     doc,
     query,
@@ -86,6 +87,26 @@ export const addEvent = async (data: EventBase) => {
         dateKey,
         createdAt: serverTimestamp(),
     });
+};
+
+export const updateEvent = async (
+    eventId: string,
+    data: Partial<EventBase>
+) => {
+    if (!eventId) throw new Error("eventId is required");
+
+    const ref = doc(db, "events", eventId);
+
+    const updateData: Record<string, unknown> = {
+        ...data,
+        updatedAt: serverTimestamp(),
+    };
+
+    if (typeof data.date === "string") {
+        updateData.dateKey = data.date.slice(0, 10);
+    }
+
+    await updateDoc(ref, updateData);
 };
 
 export const deleteEvent = async (eventId: string) => {

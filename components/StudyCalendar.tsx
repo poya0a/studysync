@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
-import { EventBaseMap, getEventCounts, getEvents, addEvent, deleteEvent } from "@/lib/calendar";
+import { EventBaseMap, getEventCounts, getEvents, addEvent, updateEvent, deleteEvent } from "@/lib/calendar";
 import { createGroup, joinGroupByCode } from "@/lib/group";
 import { Group, PERSONAL_GROUP } from "@/types/group";
 import type { Event } from "@/types/event";
@@ -41,11 +41,13 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
     const [eventCountMap, setEventCountMap] = useState<EventBaseMap>({});
     const [events, setEvents] = useState<Event[]>([]);
     const [title, setTitle] = useState<string>("");
+    const [titleEdit, setTitleEdit] = useState<string>("");
     const [inputValue, setInputValue] = useState<string>("");
     const [inputPopup, setInputPopup] = useState<InputPopupState>({
         open: false,
         type: "",
     });
+    const [eventEdit, setEventEdit] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string>("");
     const [showAlert, setShowAlert] = useState<string>("");
     const [confirmAlert, setConfirmAlert] = useState<ConfirmAlertState>({
@@ -138,7 +140,6 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
                 )
             );
         } catch {
-            setTitle("");
             return setShowAlert("일정 등록에 실패했습니다.");
         }
         setTitle("");
@@ -193,6 +194,37 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
         if (!selectedGroup?.inviteCode) return setShowAlert("초대 코드가 존재하지 않습니다.");
         await navigator.clipboard.writeText(selectedGroup?.inviteCode);
         setShowAlert("링크가 복사되었습니다.");
+    };
+
+    const handleEdit = async(eventId: string) => {
+        if (!user.uid) return setShowAlert("로그인 후 일정 등록이 가능합니다.");
+        if (!titleEdit.trim()) return setShowAlert("일정 제목을 입력해 주세요.");
+
+        try {
+            await updateEvent(eventId, {
+                title: titleEdit,
+            });
+            const dateKey = toDateKey(date);
+
+            setEventCountMap(
+                await getEventCounts(
+                    user.uid, 
+                    selectedGroup.id
+                )
+            );
+            setEvents(
+                await getEvents(
+                    dateKey, 
+                    user.uid,
+                    selectedGroup.id
+                )
+            );
+        } catch {
+            return setShowAlert("일정 수정에 실패했습니다.");
+        }
+        setTitleEdit("");
+        setEventEdit(false);
+        setShowAlert("일정이 수정되었습니다.");
     };
 
     const confirmDelete = (eventId: string) => {
@@ -318,9 +350,44 @@ export default function StudyCalendar({ selectedGroup, onGroupChange }: Props) {
                         {events.map((e) => (
                             <li key={e.id} className={styles.eventItem}>
                                 <span className={styles.colorDot} style={{ background: e.color }}></span>
-                                <span className={styles.title}>{e.title}</span>
+                                {
+                                    !eventEdit ?
+                                    <span className={styles.title}>{e.title}</span> :
+                                    <input
+                                        id="titleEdit"
+                                        name="titleEdit"
+                                        type="text"
+                                        className={styles.scheduleTitleEdit}
+                                        placeholder="일정 제목"
+                                        maxLength={TITLE_MAX}
+                                        value={titleEdit}
+                                        onChange={(e) => setTitleEdit(e.target.value)}
+                                    />
+                                }
                                 {e.uid === user.uid && 
-                                    <button className={styles.deleteButton}  onClick={() => confirmDelete(e.id)}>삭제</button>
+                                    <div className={styles.buttonContainer} style={{width: `${!eventEdit ? 150.46 : 66.23}px`}}>
+                                        <button 
+                                            className={styles.editButton}
+                                            onClick={() => {
+                                                if (!eventEdit) {
+                                                    setTitleEdit(e.title)
+                                                    setEventEdit(true)
+                                                } else {
+                                                    handleEdit(e.id)
+                                                }
+                                            }}
+                                        >
+                                            {!eventEdit ? "수정" : "저장"}
+                                        </button>
+                                        {!eventEdit &&
+                                            <button 
+                                                className={styles.deleteButton}
+                                                onClick={() => confirmDelete(e.id)}
+                                            >
+                                                삭제
+                                            </button>
+                                        }
+                                    </div>
                                 }
                             </li>
                         ))}
